@@ -1,19 +1,17 @@
+
 {
-  "name": "tetris-1v1",
+  "name": "twinbee-like-game",
   "version": "1.0.0",
-  "description": "1v1 Tetris game with Socket.IO",
-  "main": "server.js",
+  "description": "A multiplayer game similar to Twinbee, built with Node.js and Socket.IO.",
+  "main": "api/game.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node api/game.js"
   },
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^4.1.2"
+    "socket.io": "^4.0.0"
   },
   "devDependencies": {},
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "author": "Your Name",
   "license": "MIT"
 }
