@@ -1,61 +1,68 @@
+// server.js
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
-
-const PORT = process.env.PORT || 3000;
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 app.use(express.static('public'));
 
-let rooms = {};
+const rooms = {};
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
-
-  socket.on('createRoom', (room) => {
+  socket.on('createOrJoin', (room) => {
     if (!rooms[room]) {
-      rooms[room] = { players: [socket.id], gameInProgress: false };
+      rooms[room] = [];
+    }
+    if (rooms[room].length < 2) {
+      rooms[room].push(socket.id);
       socket.join(room);
-      socket.emit('roomCreated', room);
+      socket.emit('joined', room);
+      if (rooms[room].length === 2) {
+        io.to(room).emit('countdown', 3);
+        setTimeout(() => io.to(room).emit('countdown', 2), 1000);
+        setTimeout(() => io.to(room).emit('countdown', 1), 2000);
+        setTimeout(() => io.to(room).emit('startGame'), 3000);
+      }
     } else {
-      socket.emit('error', 'Room already exists');
+      socket.emit('roomFull', room);
     }
   });
 
-  socket.on('joinRoom', (room) => {
-    if (rooms[room] && rooms[room].players.length < 2) {
-      rooms[room].players.push(socket.id);
-      socket.join(room);
-      socket.emit('roomJoined', room);
-      io.in(room).emit('startGame', room);
-    } else {
-      socket.emit('error', 'Room is full or does not exist');
+  socket.on('playerMove', (data) => {
+    const room = Array.from(socket.rooms).filter(r => r !== socket.id)[0];
+    if (room) {
+      socket.to(room).emit('opponentMove', data);
     }
   });
 
-  socket.on('move', (data) => {
-    socket.to(data.room).emit('move', data);
-  });
-
-  socket.on('gameOver', (room) => {
-    io.in(room).emit('gameOver');
-    rooms[room].gameInProgress = false;
+  socket.on('gameOver', () => {
+    const room = Array.from(socket.rooms).filter(r => r !== socket.id)[0];
+    if (room) {
+      io.to(room).emit('newRound');
+    }
   });
 
   socket.on('disconnect', () => {
     for (const room in rooms) {
-      rooms[room].players = rooms[room].players.filter(id => id !== socket.id);
-      if (rooms[room].players.length === 0) {
+      rooms[room] = rooms[room].filter(id => id !== socket.id);
+      if (rooms[room].length === 0) {
         delete rooms[room];
       } else {
-        io.in(room).emit('opponentDisconnected');
+        io.to(room).emit('opponentDisconnected');
       }
     }
-    console.log('Client disconnected');
   });
 });
 
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
