@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1v1 Tetris</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="gameContainer">
+    <div id="menu">
+      <input type="text" id="roomInput" placeholder="Room name">
+      <button id="createRoomButton">Create Room</button>
+      <button id="joinRoomButton">Join Room</button>
+      <div id="waiting" style="display: none;">Waiting for an opponent...</div>
+    </div>
+    <div id="game" style="display: none;">
+      <div id="opponentCanvasContainer">
+        <canvas id="opponentCanvas" width="150" height="300"></canvas>
+      </div>
+      <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+      <div id="gameOver" style="display: none;">Game Over! Waiting for next round...</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
